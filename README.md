@@ -12,45 +12,36 @@
 ╚══════╝╚══════╝ ╚═════╝
 ```
 
-# The Age of Agentic Content
-
-It's 2026, and AI agents are everywhere. Your calendar has one. Your inbox has three. Your competitors have deployed entire fleets of them.
-
-But here's what most people get wrong: they think of agents as single-purpose tools. A writing assistant here, a research bot there, an SEO analyzer somewhere else. They're building with Legos when they should be building with living systems.
-
-**Leo is different.** It's a multi-agent orchestration system that treats content creation the way a newsroom treats journalism—with specialized roles, parallel workflows, and a single orchestrator keeping everything in sync.
-
-One command. Full research. Complete article. SEO-optimized. Images generated. Published.
+**Leo** is a multi-agent blog writing system. One command researches your topic, analyzes competitors, writes SEO-optimized content, generates images, and publishes to your CMS.
 
 ```bash
 npm install -g @anthropic/leo
 leo write "how kubernetes autoscaling actually works"
 ```
 
+## How It Works
+
+Leo is built on the [Claude Agents SDK](https://github.com/anthropics/claude-agent-sdk). A main orchestrator agent coordinates specialized subagents—each focused on one task—running up to 4 in parallel. The orchestrator has access to MCP tools (Ahrefs, Perplexity, Firecrawl, Sanity) while subagents work through CLI scripts, creating clean separation between coordination and execution.
+
+**The pipeline:**
+1. **SERP Analysis** — Pull top 10 ranking pages via DataForSEO
+2. **Parallel Research** — Web researcher + competitor scrapers run simultaneously
+3. **Competitive Analysis** — Identify content gaps, structural patterns, target word counts
+4. **Content Generation** — Write with full context: competitor data, fresh research, your brand voice
+5. **Image Creation** — Generate visuals with proper alt text and semantic relevance
+6. **Publishing** — Push to Sanity CMS or export as local markdown
+
+## Why Leo?
+
+Most AI writing tools generate words. Leo generates *informed* content.
+
+The difference: before writing a single paragraph, Leo knows what's ranking, what competitors cover, what they miss, and what your audience actually needs. It's working with real SERP data and fresh web research—not hallucinating plausible-sounding information.
+
+Your brand voice isn't a suggestion. It's a requirement loaded from `leo.config.json` that the content writer agent must satisfy. Every article reflects your niche, audience, and tone.
+
 ---
 
-## Why Another Content Tool?
-
-Every content creator in 2026 faces the same fragmented workflow:
-
-1. **Research** — Bouncing between Google, competitor sites, and industry reports
-2. **Analysis** — Figuring out what's ranking and why
-3. **Writing** — Actually producing the content
-4. **SEO** — Optimizing for search (often as an afterthought)
-5. **Images** — Creating visuals that aren't stock photo garbage
-6. **Publishing** — Getting it into your CMS
-
-Most "AI writing tools" handle step 3 and call it a day. They give you a draft that sounds like every other AI-generated fluff piece because they skipped the research, ignored the competition, and have no idea what your brand sounds like.
-
-Leo doesn't work that way.
-
----
-
-## The Architecture: Agents All the Way Down
-
-Leo is built on a simple but powerful insight: **the best content comes from specialists working together, not generalists doing everything.**
-
-Here's how it actually works under the hood:
+## Architecture Deep Dive
 
 ### The Orchestrator
 
