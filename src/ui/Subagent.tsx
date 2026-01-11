@@ -135,7 +135,7 @@ export function SubagentSummary({
         {isError ? statusIcons.error : statusIcons.success}
       </Text>
       <Text color={theme.textMuted}> 🤖 {name}</Text>
-      {toolCount && toolCount > 0 && (
+      {toolCount != null && toolCount > 0 && (
         <Text color={theme.textDim}> ({toolCount} tools)</Text>
       )}
       <Text color={theme.textDim}> • {elapsed}s</Text>

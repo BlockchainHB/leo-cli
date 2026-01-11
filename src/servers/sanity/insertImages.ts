@@ -91,20 +91,125 @@ function slugify(text: string): string {
     .trim();
 }
 
+// =============================================================================
+// DICE COEFFICIENT STRING SIMILARITY ALGORITHM
+// =============================================================================
+
 /**
- * Check if words from search match words in target
- * Allows partial matching for V2 section IDs
+ * Normalize text for comparison: lowercase, remove punctuation, collapse whitespace
+ */
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Extract bigrams (character pairs) from a string
+ * Example: "hello" → ["he", "el", "ll", "lo"]
+ */
+function getBigrams(str: string): Map<string, number> {
+  const bigrams = new Map<string, number>();
+  const normalized = normalizeText(str);
+  for (let i = 0; i < normalized.length - 1; i++) {
+    const bigram = normalized.substring(i, i + 2);
+    if (!bigram.includes(' ')) {
+      bigrams.set(bigram, (bigrams.get(bigram) || 0) + 1);
+    }
+  }
+  return bigrams;
+}
+
+/**
+ * Calculate Dice coefficient similarity (0-1)
+ * Formula: 2 * |intersection| / (|bigrams_a| + |bigrams_b|)
+ */
+function diceCoefficient(str1: string, str2: string): number {
+  const bigrams1 = getBigrams(str1);
+  const bigrams2 = getBigrams(str2);
+  if (bigrams1.size === 0 || bigrams2.size === 0) return 0;
+
+  let intersectionSize = 0;
+  for (const [bigram, count1] of bigrams1) {
+    const count2 = bigrams2.get(bigram) || 0;
+    intersectionSize += Math.min(count1, count2);
+  }
+
+  let total1 = 0, total2 = 0;
+  for (const count of bigrams1.values()) total1 += count;
+  for (const count of bigrams2.values()) total2 += count;
+
+  return (2 * intersectionSize) / (total1 + total2);
+}
+
+/**
+ * Word overlap scoring with prefix/substring detection
+ * - Exact word match: 1.0
+ * - Prefix match (min 3 chars): 0.85
+ * - Substring match: 0.5
+ * - Reverse substring: 0.3
+ */
+function wordOverlapScore(searchText: string, targetText: string): number {
+  const searchWords = normalizeText(searchText).split(/[\s-]+/).filter(w => w.length > 2);
+  const targetWords = normalizeText(targetText).split(/[\s-]+/).filter(w => w.length > 2);
+  if (searchWords.length === 0) return 0;
+
+  let matchScore = 0;
+  for (const searchWord of searchWords) {
+    let bestWordScore = 0;
+    for (const targetWord of targetWords) {
+      let wordScore = 0;
+      if (searchWord === targetWord) wordScore = 1.0;
+      else if (searchWord.length >= 3 && targetWord.startsWith(searchWord)) wordScore = 0.85;
+      else if (targetWord.includes(searchWord)) wordScore = 0.5;
+      else if (searchWord.includes(targetWord)) wordScore = 0.3;
+      bestWordScore = Math.max(bestWordScore, wordScore);
+    }
+    matchScore += bestWordScore;
+  }
+  return matchScore / searchWords.length;
+}
+
+/**
+ * Combined similarity using adaptive weighting
+ * Short terms: favor word overlap
+ * Long terms: favor Dice coefficient
+ * Applies penalty for low word coverage to prevent false positives
+ */
+function combinedSimilarity(str1: string, str2: string): { score: number; dice: number; words: number } {
+  const dice = diceCoefficient(str1, str2);
+  const words = wordOverlapScore(str1, str2);
+  const normalized1 = normalizeText(str1);
+  const searchLength = normalized1.replace(/\s/g, '').length;
+  const searchWordCount = normalized1.split(/[\s-]+/).filter(w => w.length > 2).length;
+
+  let diceWeight: number, wordsWeight: number;
+  if (searchLength < 6) { diceWeight = 0.2; wordsWeight = 0.8; }
+  else if (searchLength < 10) { diceWeight = 0.4; wordsWeight = 0.6; }
+  else { diceWeight = 0.6; wordsWeight = 0.4; }
+
+  let score = (dice * diceWeight) + (words * wordsWeight);
+
+  // Penalty for low word match coverage (prevents "returns-policy" → "Profit Returns")
+  if (searchWordCount >= 2 && words < 0.6) {
+    const penalty = (0.6 - words) * 0.8;
+    score = Math.max(0, score - penalty);
+  }
+
+  return { score, dice, words };
+}
+
+const MIN_SIMILARITY_THRESHOLD = 0.35;
+
+/**
+ * Legacy fuzzyMatch for backwards compatibility
+ * @deprecated Use combinedSimilarity instead
  */
 function fuzzyMatch(searchText: string, targetText: string): boolean {
-  const searchWords = searchText.toLowerCase().split(/[-\s]+/).filter(w => w.length > 2);
-  const targetWords = targetText.toLowerCase().split(/[-\s]+/);
-
-  // Check if most search words appear in target
-  const matchCount = searchWords.filter(word =>
-    targetWords.some(tw => tw.includes(word) || word.includes(tw))
-  ).length;
-
-  return matchCount >= Math.ceil(searchWords.length * 0.5);
+  const similarity = combinedSimilarity(searchText, targetText);
+  return similarity.score >= MIN_SIMILARITY_THRESHOLD;
 }
 
 // =============================================================================
@@ -232,35 +337,52 @@ export function insertImagesIntoDraft(slug: string, dryRun = false): InsertResul
       continue;
     }
 
-    // Find the H2 line (with fuzzy matching)
+    // Find the H2 line using best-match approach
     let insertIndex = -1;
+    let bestMatch: { heading: string; score: number; lineIndex: number } | null = null;
+    const candidates: Array<{ heading: string; lineIndex: number; score: number }> = [];
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line.startsWith('## ')) {
         const h2Text = line.replace(/^##\s+/, '');
 
-        // Exact match (case insensitive)
+        // Exact match - use immediately
         if (h2Text.toLowerCase() === targetH2.toLowerCase()) {
-          insertIndex = i + lineOffset + 1;
+          bestMatch = { heading: h2Text, score: 1.0, lineIndex: i };
           break;
         }
 
         // Partial match (for V1 format with truncated titles)
         if (h2Text.toLowerCase().includes(targetH2.toLowerCase().substring(0, 30))) {
-          insertIndex = i + lineOffset + 1;
+          bestMatch = { heading: h2Text, score: 0.9, lineIndex: i };
           break;
         }
 
-        // Fuzzy match (for V2 section IDs)
-        if (fuzzyMatch(targetH2, h2Text)) {
-          insertIndex = i + lineOffset + 1;
-          break;
-        }
+        // Score this candidate using combined similarity
+        const similarity = combinedSimilarity(targetH2, h2Text);
+        candidates.push({ heading: h2Text, lineIndex: i, score: similarity.score });
       }
+    }
+
+    // If no exact/partial match, pick best candidate above threshold
+    if (!bestMatch && candidates.length > 0) {
+      candidates.sort((a, b) => b.score - a.score);
+      if (candidates[0].score >= MIN_SIMILARITY_THRESHOLD) {
+        bestMatch = candidates[0];
+        console.log(`[insertImages] Best match for "${targetH2}" → "${bestMatch.heading}" (score: ${bestMatch.score.toFixed(2)})`);
+      }
+    }
+
+    if (bestMatch) {
+      insertIndex = bestMatch.lineIndex + lineOffset + 1;
     }
 
     if (insertIndex === -1) {
       console.log(`[insertImages] ⚠️ H2 not found: "${targetH2}"`);
+      if (candidates.length > 0) {
+        console.log(`[insertImages]    Top candidates: ${candidates.slice(0, 3).map(c => `"${c.heading}" (${c.score.toFixed(2)})`).join(', ')}`);
+      }
       continue;
     }
 

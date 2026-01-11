@@ -93,7 +93,7 @@ export function ContextBar({ usage }: ContextBarProps) {
       )}
 
       {/* Image count if any */}
-      {imageCount && imageCount > 0 && (
+      {imageCount != null && imageCount > 0 && (
         <>
           <Text color={theme.textDim}> · </Text>
           <Text color={theme.textMuted}>{imageCount} img</Text>
