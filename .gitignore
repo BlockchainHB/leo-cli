@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Draft outputs (keep structure, ignore generated content)
+drafts/*.json
+drafts/*.md
+!drafts/.gitkeep
+
+# Generated images
+images/**/*.png
+!images/.gitkeep
+
+# Research outputs
+research/*.md
+blog-research/*.md
+leo-session.json
+
+# Session state (transient)
+.claude/session-state.json
