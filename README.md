@@ -340,8 +340,8 @@ This is what agentic AI looks like when it's designed for outcomes rather than d
 ## Development
 
 ```bash
-git clone https://github.com/BlockchainHB/leo-cli.git
-cd leo-cli
+git clone https://github.com/BlockchainHB/leo.git
+cd leo
 npm install
 npm run dev
 ```
