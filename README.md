@@ -1,115 +1,123 @@
-# Leo - AI Blog Writing Agent
+# Leo
 
-Leo is an AI-powered CLI tool that helps you create SEO-optimized blog content using Claude. It handles the entire content creation pipeline: keyword research, competitor analysis, content writing, image generation, and CMS publishing.
+> AI-powered blog writing agent that creates SEO-optimized content with Claude
 
-## Features
+[![npm version](https://img.shields.io/npm/v/@anthropic/leo.svg)](https://www.npmjs.com/package/@anthropic/leo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-- **AI-Powered Writing**: Uses Claude to generate high-quality, SEO-optimized blog posts
-- **Competitor Analysis**: Scrapes and analyzes top-ranking content for any keyword
-- **SERP Research**: Integrates with DataForSEO for keyword and ranking data
-- **Multi-Agent Workflow**: Orchestrates specialized agents for research, writing, and image creation
-- **Flexible CMS**: Publish to Sanity CMS or save as local markdown files
-- **Customizable Style**: Configure your blog's voice, tone, and visual style
-- **Local Keyword Queue**: Manage your content pipeline without external dependencies
+Leo handles the entire content creation pipeline: keyword research, competitor analysis, content writing, image generation, and CMS publishing. Built with Claude and designed for developers who want to automate their blog content workflow.
+
+## Why Use Leo?
+
+- **Automated Research** - Analyzes top-ranking competitors and current web data
+- **SEO-Optimized** - Generates content structured for search rankings
+- **Multi-Agent Architecture** - Specialized agents for research, writing, and images
+- **Flexible Publishing** - Sanity CMS or local markdown files
+- **Configurable Style** - Customize voice, tone, and visual design
+- **Local-First** - Works entirely on your machine with your API keys
 
 ## Installation
 
 ```bash
-# Install globally
 npm install -g @anthropic/leo
+```
 
-# Or run directly with npx
+Or run directly without installing:
+
+```bash
 npx @anthropic/leo
 ```
 
 ## Quick Start
 
-### 1. First Run Setup
-
-When you first run Leo, you'll be guided through an interactive setup:
+### 1. Run the Setup Wizard
 
 ```bash
 leo
 ```
 
-This will ask you about:
-- Your blog name and niche
-- Target audience
-- Brand voice/tone
-- Publishing preferences (Sanity CMS or local markdown)
-- Image style preferences
+Leo guides you through interactive setup on first run:
+- Blog name, niche, and URL
+- Target audience description
+- Writing style preferences
+- CMS choice (Sanity or local markdown)
 
-### 2. Configure API Keys
+### 2. Add Your API Key
 
-After setup, configure your API keys:
+The setup wizard will prompt for your Claude API key. You can also configure it later:
 
 ```bash
 leo settings
 ```
 
-**Required:**
-- `ANTHROPIC_API_KEY` - Your Claude API key ([Get one here](https://console.anthropic.com/settings/keys))
+Get your key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
 
-**Optional but recommended:**
-- `DATAFORSEO_LOGIN/PASSWORD` - For SERP data and competitor analysis
-- `PERPLEXITY_API_KEY` - For web research
-- `FIRECRAWL_API_KEY` - For competitor page scraping
-- `OPENROUTER_API_KEY` - For image generation
-- `SANITY_API_KEY` - For Sanity CMS publishing
-
-### 3. Add Keywords
+### 3. Write Your First Article
 
 ```bash
-# Add a single keyword
-leo queue add "how to start a blog"
+leo write "how to start a blog in 2025"
+```
 
-# Import from file (one keyword per line)
-leo queue import keywords.txt
+Leo will:
+1. Research the keyword and competitors
+2. Analyze top-ranking content
+3. Write an SEO-optimized article
+4. Generate image specifications
+5. Save to your configured CMS
 
-# View queue status
+## Examples
+
+### Write a Single Article
+
+```bash
+leo write "best productivity apps for developers"
+```
+
+### Manage Your Keyword Queue
+
+```bash
+# Add keywords to your queue
+leo queue add "react performance optimization"
+leo queue add "typescript best practices"
+
+# Check queue status
 leo queue status
-```
 
-### 4. Write Content
-
-```bash
-# Write a blog post for a specific keyword
-leo write "how to start a blog"
-
-# Write the next keyword in queue
+# Write the next queued keyword
 leo write next
-
-# Batch process multiple keywords
-leo super-leo 5
 ```
 
-## Configuration
+### Interactive Mode Commands
 
-Leo stores your configuration in `leo.config.json`:
+Inside Leo's interactive mode, use slash commands:
+
+```
+/write-blog seo tips for startups   # Research and write article
+/queue-status                        # View pending keywords
+/publish my-article-slug             # Publish to CMS
+/settings                            # Configure API keys
+/cost                                # Show session costs
+```
+
+### Configuration Example
+
+Leo stores settings in `leo.config.json`:
 
 ```json
 {
-  "version": "1.0",
   "blog": {
-    "name": "My Tech Blog",
+    "name": "Dev Insights",
     "niche": "technology",
-    "targetAudience": "developers and tech enthusiasts",
-    "brandVoice": "professional yet approachable",
-    "baseUrl": "https://myblog.com"
+    "targetAudience": "software developers",
+    "brandVoice": "technical and precise",
+    "baseUrl": "https://devinsights.io"
   },
   "cms": {
     "provider": "local"
   },
-  "queue": {
-    "provider": "local"
-  },
   "author": {
-    "name": "Your Name"
-  },
-  "categories": [
-    { "slug": "tutorials", "name": "Tutorials" },
-    { "slug": "guides", "name": "Guides" }
-  ]
+    "name": "Jane Developer"
+  }
 }
 ```
 
@@ -117,55 +125,63 @@ Leo stores your configuration in `leo.config.json`:
 
 | Command | Description |
 |---------|-------------|
-| `leo` | Start Leo (runs setup on first use) |
-| `leo write [keyword]` | Write a blog post for a keyword |
-| `leo write next` | Write the next pending keyword |
-| `leo queue status` | Show keyword queue statistics |
-| `leo queue add "keyword"` | Add a keyword to the queue |
-| `leo queue list` | List pending keywords |
+| `leo` | Start interactive mode |
+| `leo write [keyword]` | Write article for keyword |
+| `leo write next` | Write next queued keyword |
+| `leo queue status` | Show queue statistics |
+| `leo queue add "kw"` | Add keyword to queue |
 | `leo settings` | Configure API keys |
-| `leo update` | Update Leo to the latest version |
-| `leo help` | Show all commands |
+| `leo reset` | Reset config for fresh start |
+| `leo update` | Update to latest version |
 
-### Interactive Commands (inside Leo)
+## How It Works
 
-| Command | Description |
-|---------|-------------|
-| `/write-blog [keyword]` | Full research and writing workflow |
-| `/queue-status` | Show queue statistics |
-| `/publish [slug]` | Publish a draft |
-| `/settings` | Open API key configuration |
-| `/clear` | Clear conversation |
-| `/cost` | Show session cost breakdown |
+Leo orchestrates specialized agents in a multi-phase workflow:
 
-## Workflow
+```
+Leo (Orchestrator)
+ ├─ DataForSEO     → SERP data and competitor URLs
+ ├─ Web Researcher → Current information via Perplexity
+ ├─ Competitor Scraper → Top-ranking content via Firecrawl
+ ├─ Content Analyzer → Patterns, gaps, and opportunities
+ ├─ Content Writer → SEO-optimized article (Claude Opus)
+ └─ Image Creator → Image specs and generation
+```
 
-Leo uses a multi-phase workflow to create content:
+Each phase builds on the previous, creating comprehensive, well-researched content.
 
-1. **Keyword Research**: Gets SERP data and competitor URLs
-2. **Web Research**: Gathers current information via Perplexity
-3. **Competitor Scraping**: Analyzes top-ranking content
-4. **Content Analysis**: Identifies patterns, gaps, and opportunities
-5. **Article Writing**: Generates SEO-optimized content
-6. **Image Creation**: Generates image specifications and images
-7. **Publishing**: Publishes to CMS or saves locally
+## API Keys
+
+| Key | Purpose | Required |
+|-----|---------|----------|
+| `ANTHROPIC_API_KEY` | Claude access | Yes |
+| `DATAFORSEO_LOGIN/PASSWORD` | SERP data | No |
+| `PERPLEXITY_API_KEY` | Web research | No |
+| `FIRECRAWL_API_KEY` | Page scraping | No |
+| `OPENROUTER_API_KEY` | Image generation | No |
+| `SANITY_API_KEY` | CMS publishing | No |
+
+Create a `.env` file:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+DATAFORSEO_LOGIN=your@email.com
+DATAFORSEO_PASSWORD=your-password
+PERPLEXITY_API_KEY=pplx-...
+```
 
 ## Publishing Options
 
 ### Local Markdown (Default)
 
-By default, Leo saves articles as markdown files:
-- Articles: `./drafts/{slug}.md`
-- Images: `./images/{slug}/`
-- Image specs: `./drafts/{slug}-images.json`
+Articles save to your project:
+- `./drafts/{slug}.md` - Article content
+- `./images/{slug}/` - Generated images
+- `./drafts/{slug}-images.json` - Image metadata
 
 ### Sanity CMS
 
-To publish to Sanity CMS:
-
-1. Set `cms.provider` to `"sanity"` in `leo.config.json`
-2. Configure your Sanity project ID and dataset
-3. Add your `SANITY_API_KEY` to environment variables
+Configure in `leo.config.json`:
 
 ```json
 {
@@ -179,80 +195,23 @@ To publish to Sanity CMS:
 }
 ```
 
-## Updating
-
-Leo includes a built-in update command that preserves your configuration:
-
-```bash
-# Check for updates
-leo update check
-
-# Update to latest version
-leo update
-```
-
-## Environment Variables
-
-Create a `.env` file in your project directory:
-
-```bash
-# Required
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Research (Optional)
-DATAFORSEO_LOGIN=your@email.com
-DATAFORSEO_PASSWORD=your-password
-PERPLEXITY_API_KEY=pplx-...
-FIRECRAWL_API_KEY=fc-...
-
-# Publishing (Optional)
-OPENROUTER_API_KEY=sk-or-...
-SANITY_API_KEY=sk...
-SANITY_PROJECT_ID=your-project
-SANITY_DATASET=production
-```
-
-## Architecture
-
-Leo is built on the Claude Agent SDK and uses a multi-agent architecture:
-
-```
-Leo (Orchestrator)
-├── Web Researcher (Perplexity)
-├── Competitor Scraper (Firecrawl)
-├── Competitor Analyzer
-├── Content Writer (Claude Opus)
-└── Image Creator
-```
-
-Each subagent specializes in a specific task and reports back to Leo for orchestration.
-
 ## Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/anthropics/leo.git
-cd leo
-
-# Install dependencies
+git clone https://github.com/BlockchainHB/leo-cli.git
+cd leo-cli
 npm install
-
-# Run in development mode
 npm run dev
-
-# Build
-npm run build
 ```
+
+## Contributing
+
+Contributions welcome! Please open an issue first to discuss what you'd like to change.
 
 ## License
 
 MIT
 
-## Contributing
+---
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Support
-
-- [GitHub Issues](https://github.com/anthropics/leo/issues)
-- [Documentation](https://github.com/anthropics/leo/wiki)
+Built with [Claude](https://claude.ai) and [Ink](https://github.com/vadimdemedes/ink)

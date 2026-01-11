@@ -39,3 +39,6 @@ leo-session.json
 
 # Session state (transient)
 .claude/session-state.json
+blog-progress.json
+keywords.json
+leo.config.json
